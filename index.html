@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Fish — Multiplication Race</title>
+<style>
+  :root{
+    --p1:#ff7043; --p2:#42a5f5; --p2d:#1976d2;
+    --sea1:#7fd8ff; --sea2:#2196f3; --sea3:#0d47a1;
+    --good:#2ecc71; --bad:#e74c3c; --gold:#ffd54f; --ink:#0b2a4a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{font-family:"Comic Sans MS","Trebuchet MS",Verdana,sans-serif;
+    background:linear-gradient(180deg,#bff0ff 0%,var(--sea1) 25%,var(--sea2) 70%,var(--sea3) 100%);
+    color:var(--ink);min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  h1{text-align:center;margin:14px 8px 4px;font-size:clamp(26px,5vw,46px);color:#fff;
+    text-shadow:2px 3px 0 #0277bd,0 0 18px rgba(255,255,255,.4);letter-spacing:1px;}
+  .sub{color:#08406b;font-weight:bold;margin-top:0;text-align:center;}
+  .bubble{position:fixed;bottom:-40px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),rgba(255,255,255,.15));
+    animation:rise linear infinite;z-index:0;pointer-events:none;}
+  @keyframes rise{to{transform:translateY(-105vh) translateX(20px);opacity:0;}}
+  .card{position:relative;z-index:2;background:rgba(255,255,255,.92);border-radius:22px;
+    padding:22px 22px 26px;margin:10px;box-shadow:0 12px 30px rgba(3,40,80,.35);width:min(680px,94vw);}
+  .hidden{display:none!important;}
+  label{font-weight:bold;display:block;margin:14px 0 6px;}
+  input[type=text]{width:100%;padding:12px;border:3px solid #90caf9;border-radius:12px;font-size:18px;font-family:inherit;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row>div{flex:1;min-width:140px;}
+  .opts{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .chip{padding:10px 16px;border-radius:30px;border:3px solid #bbb;background:#fff;cursor:pointer;
+    font-weight:bold;font-size:16px;font-family:inherit;transition:.15s;}
+  .chip.on{border-color:var(--sea2);background:#e3f2fd;color:var(--p2d);transform:scale(1.05);}
+  .tables{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px;}
+  @media(max-width:480px){.tables{grid-template-columns:repeat(4,1fr);}}
+  .tbox{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 4px;border:3px solid #cfd8dc;
+    border-radius:12px;background:#fff;cursor:pointer;font-weight:bold;font-size:16px;user-select:none;transition:.12s;}
+  .tbox.on{border-color:#26a69a;background:#e0f2f1;color:#00695c;transform:scale(1.04);}
+  .tbox input{width:20px;height:20px;accent-color:#26a69a;cursor:pointer;}
+  .selrow{display:flex;gap:8px;margin-top:8px;}
+  .selrow .mini2{flex:1;border:2px solid #90caf9;background:#e3f2fd;border-radius:10px;padding:8px;
+    font-weight:bold;font-family:inherit;cursor:pointer;color:#1565c0;}
+  .warn{color:#c62828;font-weight:bold;text-align:center;min-height:20px;margin-top:4px;}
+  .btn{display:block;width:100%;margin-top:20px;padding:16px;border:none;border-radius:16px;
+    background:linear-gradient(180deg,#ffca28,#ffb300);color:#5d3b00;font-weight:bold;
+    font-size:22px;font-family:inherit;cursor:pointer;box-shadow:0 6px 0 #c98a00;transition:.08s;}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c98a00;}
+  #game{width:min(900px,96vw);z-index:2;position:relative;}
+  .scoreboard{display:flex;justify-content:space-between;gap:8px;margin:6px 0 2px;}
+  .pname{font-weight:bold;color:#fff;text-shadow:1px 2px 0 rgba(0,0,0,.25);font-size:clamp(14px,2.4vw,20px);
+    background:rgba(0,0,0,.12);padding:6px 12px;border-radius:14px;}
+  .pname.p1{box-shadow:inset 0 0 0 3px var(--p1);}
+  .pname.p2{box-shadow:inset 0 0 0 3px var(--p2);}
+  .lane{position:relative;height:84px;margin:10px 0;border-radius:16px;
+    background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.05));
+    border:2px dashed rgba(255,255,255,.6);overflow:hidden;}
+  .lane.active{box-shadow:0 0 0 4px var(--gold),0 0 22px var(--gold);}
+  .finish{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:42px;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));animation:swim 2s ease-in-out infinite;}
+  @keyframes swim{0%,100%{transform:translateY(-50%) rotate(-4deg);}50%{transform:translateY(-62%) rotate(4deg);}}
+  .swimmer{position:absolute;left:0;top:50%;transform:translate(0,-50%);font-size:40px;
+    transition:left .6s cubic-bezier(.34,1.56,.64,1);z-index:3;}
+  .progress-pips{position:absolute;left:48px;right:54px;top:50%;transform:translateY(-50%);
+    display:flex;justify-content:space-between;}
+  .pip{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.55);}
+  .turnbar{text-align:center;color:#fff;font-weight:bold;font-size:clamp(16px,3vw,22px);
+    margin:8px 0 2px;text-shadow:1px 2px 0 rgba(0,0,0,.25);}
+  .question{font-size:clamp(34px,8vw,64px);font-weight:bold;text-align:center;color:#fff;
+    text-shadow:2px 3px 0 #034d86;margin:6px 0;}
+  .timerwrap{height:16px;background:rgba(255,255,255,.4);border-radius:10px;overflow:hidden;margin:6px auto;width:90%;}
+  .timerbar{height:100%;width:100%;background:linear-gradient(90deg,#66bb6a,#ffee58,#ef5350);
+    transform-origin:left;transition:transform .1s linear;}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px auto;width:min(560px,92vw);}
+  .ans{padding:18px;border:none;border-radius:16px;background:#fff;color:var(--ink);
+    font-size:30px;font-weight:bold;font-family:inherit;cursor:pointer;box-shadow:0 5px 0 #b9d6ea;transition:.08s;}
+  .ans:active{transform:translateY(3px);box-shadow:0 2px 0 #b9d6ea;}
+  .ans.correct{background:var(--good);color:#fff;box-shadow:0 5px 0 #1e8e4f;}
+  .ans.wrong{background:var(--bad);color:#fff;box-shadow:0 5px 0 #a82c20;}
+  .typewrap{display:flex;gap:10px;width:min(420px,92vw);margin:12px auto;}
+  .typewrap input{font-size:34px;text-align:center;}
+  .feedback{text-align:center;font-size:clamp(20px,4vw,30px);font-weight:bold;min-height:34px;color:#fff;
+    text-shadow:1px 2px 0 rgba(0,0,0,.3);}
+  .topbtns{display:flex;gap:8px;justify-content:center;margin-top:8px;}
+  .mini{background:rgba(255,255,255,.85);border:none;border-radius:12px;padding:8px 14px;font-weight:bold;
+    font-family:inherit;cursor:pointer;color:var(--ink);}
+  #win{position:fixed;inset:0;background:rgba(2,30,60,.82);z-index:20;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;}
+  #win .trophy{font-size:120px;animation:pop .6s ease;}
+  @keyframes pop{0%{transform:scale(0) rotate(-30deg);}100%{transform:scale(1) rotate(0);}}
+  #win h2{font-size:clamp(30px,7vw,56px);margin:6px;text-shadow:2px 3px 0 #034d86;}
+  .confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:21;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(105vh) rotate(720deg);}}
+  .scoreline{font-size:22px;margin:6px;}
+</style>
+</head>
+<body>
+
+<h1>🎣 Catch the Fish! 🐟</h1>
+<p class="sub">A multiplication race for two players · choose tables 1–12</p>
+
+<div id="start" class="card">
+  <div class="row">
+    <div><label>Player 1 name</label><input id="name1" type="text" maxlength="12" placeholder="Player 1"></div>
+    <div><label>Player 2 name</label><input id="name2" type="text" maxlength="12" placeholder="Player 2"></div>
+  </div>
+
+  <label>Answer style</label>
+  <div class="opts" id="modeOpts">
+    <button class="chip on" data-mode="choice">🔘 Multiple choice</button>
+    <button class="chip" data-mode="type">⌨️ Type the answer</button>
+  </div>
+
+  <label>Which times tables to include?</label>
+  <div class="tables" id="tablePicker"></div>
+  <div class="selrow">
+    <button type="button" class="mini2" id="selAll">✔️ Select all</button>
+    <button type="button" class="mini2" id="selNone">✖️ Clear all</button>
+    <button type="button" class="mini2" id="sel110">1–10</button>
+  </div>
+  <div class="warn" id="tableWarn"></div>
+
+  <label>Seconds per question (the timer!)</label>
+  <div class="opts" id="timeOpts">
+    <button class="chip" data-time="6">6s ⚡ fast</button>
+    <button class="chip on" data-time="10">10s 👍 normal</button>
+    <button class="chip" data-time="15">15s 🐢 relaxed</button>
+  </div>
+
+  <label>Steps to reach the fish</label>
+  <div class="opts" id="stepOpts">
+    <button class="chip" data-steps="6">6 · short</button>
+    <button class="chip on" data-steps="8">8 · normal</button>
+    <button class="chip" data-steps="10">10 · long</button>
+  </div>
+
+  <button class="btn" id="startBtn">Start the Race! 🚀</button>
+  <p style="text-align:center;color:#4a6b88;font-size:14px;margin-bottom:0;">
+    Correct answer = swim forward ➡️ &nbsp;|&nbsp; wrong or too slow = drift back ⬅️
+  </p>
+</div>
+
+<div id="game" class="hidden">
+  <div class="scoreboard">
+    <span class="pname p1" id="lab1">Player 1</span>
+    <span class="pname p2" id="lab2">Player 2</span>
+  </div>
+  <div class="lane" id="lane1">
+    <div class="progress-pips" id="pips1"></div>
+    <div class="swimmer" id="sw1">🪝</div>
+    <div class="finish">🐟</div>
+  </div>
+  <div class="lane" id="lane2">
+    <div class="progress-pips" id="pips2"></div>
+    <div class="swimmer" id="sw2">🪝</div>
+    <div class="finish">🐠</div>
+  </div>
+  <div class="turnbar" id="turnbar">Player 1's turn</div>
+  <div class="question" id="question">3 × 4 = ?</div>
+  <div class="timerwrap"><div class="timerbar" id="timerbar"></div></div>
+  <div class="answers" id="answers"></div>
+  <div class="typewrap hidden" id="typewrap">
+    <input id="typeInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="?">
+    <button class="ans" id="typeGo" style="font-size:22px;">OK ✅</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="topbtns">
+    <button class="mini" id="muteBtn">🔊 Sound: On</button>
+    <button class="mini" id="quitBtn">↩️ New game</button>
+  </div>
+</div>
+
+<div id="win" class="hidden">
+  <div class="trophy">🏆</div>
+  <h2 id="winText">Player 1 caught the fish!</h2>
+  <div class="scoreline" id="winScore"></div>
+  <button class="btn" style="width:auto;padding:16px 30px;" id="againBtn">Play again 🔁</button>
+</div>
+
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+
+(function makeBubbles(){
+  for(var i=0;i<14;i++){
+    var b=document.createElement('div');
+    b.className='bubble';
+    var s=8+Math.random()*26;
+    b.style.width=b.style.height=s+'px';
+    b.style.left=(Math.random()*100)+'vw';
+    b.style.animationDuration=(6+Math.random()*9)+'s';
+    b.style.animationDelay=(-Math.random()*10)+'s';
+    document.body.appendChild(b);
+  }
+})();
+
+var settings={mode:'choice', time:10, steps:8, tables:[1,2,3,4,5,6,7,8,9,10]};
+function wireChips(id,key,parse){
+  document.querySelectorAll('#'+id+' .chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.querySelectorAll('#'+id+' .chip').forEach(function(x){x.classList.remove('on');});
+      c.classList.add('on');
+      settings[key]=parse(c.dataset[key]);
+    });
+  });
+}
+wireChips('modeOpts','mode',function(v){return v;});
+wireChips('timeOpts','time',function(v){return parseInt(v,10);});
+wireChips('stepOpts','steps',function(v){return parseInt(v,10);});
+
+function buildTablePicker(){
+  var wrap=$('tablePicker'); wrap.innerHTML='';
+  for(var n=1;n<=12;n++){
+    var checked=settings.tables.indexOf(n)>=0;
+    var lab=document.createElement('label');
+    lab.className='tbox'+(checked?' on':'');
+    lab.innerHTML='<input type="checkbox" value="'+n+'"'+(checked?' checked':'')+'> '+n+'×';
+    (function(lab){
+      var cb=lab.querySelector('input');
+      cb.addEventListener('change',function(){
+        lab.classList.toggle('on',cb.checked);
+        syncTables();
+      });
+    })(lab);
+    wrap.appendChild(lab);
+  }
+  syncTables();
+}
+function syncTables(){
+  var checked=document.querySelectorAll('#tablePicker input:checked');
+  settings.tables=Array.prototype.map.call(checked,function(c){return parseInt(c.value,10);});
+  $('tableWarn').textContent = settings.tables.length ? '' : 'Pick at least one table!';
+}
+function setTables(list){
+  document.querySelectorAll('#tablePicker input').forEach(function(cb){
+    cb.checked=list.indexOf(parseInt(cb.value,10))>=0;
+    cb.closest('.tbox').classList.toggle('on',cb.checked);
+  });
+  syncTables();
+}
+buildTablePicker();
+$('selAll').addEventListener('click',function(){setTables([1,2,3,4,5,6,7,8,9,10,11,12]);});
+$('selNone').addEventListener('click',function(){setTables([]);});
+$('sel110').addEventListener('click',function(){setTables([1,2,3,4,5,6,7,8,9,10]);});
+
+var audioCtx=null, soundOn=true;
+function ac(){ if(!audioCtx){ try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } return audioCtx; }
+function tone(freq,dur,type,vol,when){
+  if(!soundOn) return; var c=ac(); if(!c) return;
+  type=type||'sine'; vol=vol||0.2; when=when||0;
+  var o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.value=freq;
+  o.connect(g); g.connect(c.destination);
+  var t=c.currentTime+when;
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.start(t); o.stop(t+dur);
+}
+function sndCorrect(){ tone(660,.12,'sine',.25); tone(880,.18,'sine',.25,.10); }
+function sndWrong(){ tone(200,.25,'sawtooth',.2); tone(150,.3,'sawtooth',.2,.12); }
+function sndWin(){ [523,659,784,1047].forEach(function(f,i){tone(f,.25,'triangle',.25,i*.14);}); }
+
+var state=null;
+
+function newQuestion(){
+  var tabs = settings.tables.length ? settings.tables : [1,2,3,4,5,6,7,8,9,10];
+  var a = tabs[Math.floor(Math.random()*tabs.length)];
+  var b = 1+Math.floor(Math.random()*12);
+  return {a:a,b:b,ans:a*b};
+}
+function distractors(correct){
+  var set={}; set[correct]=true; var count=1; var guard=0;
+  while(count<4 && guard++<60){
+    var d; var r=Math.random();
+    if(r<0.4) d=correct+(Math.random()<.5?1:-1)*(1+Math.floor(Math.random()*3));
+    else if(r<0.7) d=correct+(Math.random()<.5?1:-1)*((state&&state.q)?state.q.a:10);
+    else d=(1+Math.floor(Math.random()*12))*(1+Math.floor(Math.random()*12));
+    if(d>0 && !set[d]){ set[d]=true; count++; }
+  }
+  var extra=correct+1;
+  while(count<4){ if(extra>0 && !set[extra]){ set[extra]=true; count++; } extra++; }
+  var arr=Object.keys(set).map(Number);
+  for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;}
+  return arr;
+}
+
+var timerHandle=null;
+function startTimer(){
+  clearInterval(timerHandle);
+  var bar=$('timerbar');
+  var total=settings.time*1000;
+  var start=performance.now();
+  bar.style.transform='scaleX(1)';
+  timerHandle=setInterval(function(){
+    var left=Math.max(0, total-(performance.now()-start));
+    bar.style.transform='scaleX('+(left/total)+')';
+    if(left<=0){ clearInterval(timerHandle); handleAnswer(null,null); }
+  },50);
+}
+
+function renderTurn(){
+  var p=state.turn;
+  $('turnbar').textContent = state.names[p] + "'s turn";
+  $('lane1').classList.toggle('active',p===0);
+  $('lane2').classList.toggle('active',p===1);
+  state.q=newQuestion();
+  $('question').textContent = state.q.a+' × '+state.q.b+' = ?';
+  $('feedback').textContent='';
+  if(settings.mode==='choice'){
+    $('answers').classList.remove('hidden');
+    $('typewrap').classList.add('hidden');
+    var opts=distractors(state.q.ans);
+    $('answers').innerHTML='';
+    opts.forEach(function(v){
+      var b=document.createElement('button');
+      b.className='ans'; b.textContent=v;
+      b.addEventListener('click',function(){handleAnswer(v,b);});
+      $('answers').appendChild(b);
+    });
+  }else{
+    $('answers').classList.add('hidden');
+    $('typewrap').classList.remove('hidden');
+    var inp=$('typeInput'); inp.value=''; inp.disabled=false;
+    setTimeout(function(){inp.focus();},50);
+  }
+  state.locked=false;
+  startTimer();
+}
+
+function positionSwimmer(p){
+  var pct = state.pos[p]/settings.steps;
+  var sw = p===0?$('sw1'):$('sw2');
+  sw.style.left = (6 + pct*78) + '%';
+}
+
+function buildPips(){
+  ['pips1','pips2'].forEach(function(id){
+    var el=$(id); el.innerHTML='';
+    for(var i=0;i<settings.steps;i++){var d=document.createElement('div');d.className='pip';el.appendChild(d);}
+  });
+}
+
+function handleAnswer(value,btn){
+  if(state.locked) return;
+  state.locked=true;
+  clearInterval(timerHandle);
+  var p=state.turn;
+  var correct = value!==null && Number(value)===state.q.ans;
+  state.attempts[p]++;
+  if(correct){
+    state.score[p]++;
+    state.pos[p]=Math.min(settings.steps, state.pos[p]+1);
+    $('feedback').textContent='✅ Correct! Swim forward!';
+    sndCorrect();
+    if(btn) btn.classList.add('correct');
+  }else{
+    state.pos[p]=Math.max(0, state.pos[p]-1);
+    var why = value===null ? '⏰ Too slow!' : '❌ Oops!';
+    $('feedback').textContent = why+'  '+state.q.a+' × '+state.q.b+' = '+state.q.ans;
+    sndWrong();
+    if(btn) btn.classList.add('wrong');
+    if(settings.mode==='choice'){
+      document.querySelectorAll('.ans').forEach(function(b){ if(Number(b.textContent)===state.q.ans) b.classList.add('correct'); });
+    }
+  }
+  positionSwimmer(p);
+  if(state.pos[p]>=settings.steps){ setTimeout(function(){endGame(p);},700); return; }
+  setTimeout(function(){
+    state.turn = 1-state.turn;
+    renderTurn();
+  }, correct?900:1500);
+}
+
+function endGame(winner){
+  clearInterval(timerHandle);
+  sndWin();
+  $('winText').textContent = state.names[winner]+' caught the fish! 🐟';
+  $('winScore').innerHTML =
+    state.names[0]+': '+state.score[0]+'/'+state.attempts[0]+' correct<br>'+
+    state.names[1]+': '+state.score[1]+'/'+state.attempts[1]+' correct';
+  $('win').classList.remove('hidden');
+  var colors=['#ff7043','#42a5f5','#ffd54f','#66bb6a','#ab47bc','#ffffff'];
+  for(var i=0;i<60;i++){
+    (function(i){
+      var c=document.createElement('div');
+      c.className='confetti';
+      c.style.left=Math.random()*100+'vw';
+      c.style.background=colors[i%colors.length];
+      c.style.animationDuration=(2+Math.random()*2)+'s';
+      c.style.animationDelay=(Math.random()*0.6)+'s';
+      document.body.appendChild(c);
+      setTimeout(function(){c.remove();},4200);
+    })(i);
+  }
+}
+
+function startGame(){
+  syncTables();
+  if(settings.tables.length===0){ $('tableWarn').textContent='Pick at least one table to start!'; return; }
+  ac();
+  var n1=$('name1').value.trim()||'Player 1';
+  var n2=$('name2').value.trim()||'Player 2';
+  state={ names:[n1,n2], pos:[0,0], score:[0,0], attempts:[0,0], turn:0, q:null, locked:false };
+  $('lab1').textContent=n1; $('lab2').textContent=n2;
+  buildPips();
+  positionSwimmer(0); positionSwimmer(1);
+  $('start').classList.add('hidden');
+  $('win').classList.add('hidden');
+  $('game').classList.remove('hidden');
+  renderTurn();
+}
+
+$('startBtn').addEventListener('click',startGame);
+$('againBtn').addEventListener('click',function(){ $('win').classList.add('hidden'); $('game').classList.add('hidden'); $('start').classList.remove('hidden'); });
+$('quitBtn').addEventListener('click',function(){ clearInterval(timerHandle); $('game').classList.add('hidden'); $('start').classList.remove('hidden'); });
+$('muteBtn').addEventListener('click',function(){ soundOn=!soundOn; $('muteBtn').textContent= soundOn?'🔊 Sound: On':'🔇 Sound: Off'; });
+$('typeGo').addEventListener('click',function(){ var v=$('typeInput').value.trim(); if(v!=='') handleAnswer(v,null); });
+$('typeInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ var v=e.target.value.trim(); if(v!=='') handleAnswer(v,null); } });
+</script>
+</body>
+</html>
