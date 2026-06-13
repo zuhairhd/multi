@@ -365,17 +365,40 @@ function handleAnswer(value,btn){
     }
   }
   positionSwimmer(p);
-  if(state.pos[p]>=settings.steps){ setTimeout(function(){endGame(p);},700); return; }
+  // A round = both players have answered once. Only decide the result at the
+  // end of a round so both players always get an equal number of questions.
+  var roundDone = (p===1);
+  var anyReached = state.pos[0]>=settings.steps || state.pos[1]>=settings.steps;
   setTimeout(function(){
+    if(roundDone && anyReached){ finishGame(); return; }
     state.turn = 1-state.turn;
     renderTurn();
   }, correct?900:1500);
 }
 
+function finishGame(){
+  var r0 = state.pos[0]>=settings.steps;
+  var r1 = state.pos[1]>=settings.steps;
+  var winner;
+  if(r0 && r1){
+    // Both caught the fish this round: best accuracy wins, otherwise a draw.
+    if(state.score[0]>state.score[1]) winner=0;
+    else if(state.score[1]>state.score[0]) winner=1;
+    else winner=-1;
+  } else {
+    winner = r0 ? 0 : 1;
+  }
+  endGame(winner);
+}
+
 function endGame(winner){
   clearInterval(timerHandle);
   sndWin();
-  $('winText').textContent = state.names[winner]+' caught the fish! 🐟';
+  if(winner===-1){
+    $('winText').textContent = "It's a draw! Both caught the fish! 🐟🐟";
+  } else {
+    $('winText').textContent = state.names[winner]+' caught the fish! 🐟';
+  }
   $('winScore').innerHTML =
     state.names[0]+': '+state.score[0]+'/'+state.attempts[0]+' correct<br>'+
     state.names[1]+': '+state.score[1]+'/'+state.attempts[1]+' correct';
