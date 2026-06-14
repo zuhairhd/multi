@@ -8,6 +8,9 @@ A small collection of standalone projects.
   (also served as `index.html`). Open the HTML file in a browser to play.
 - **XOR Space Cipher** — `xor_space_cipher.py`. A learning tool that encrypts and
   decrypts text with a repeating-key XOR while keeping spaces unchanged.
+- **XOR Unicode/Arabic Space Cipher** — `xor_space_cipher_unicode.py`. A Unicode-safe
+  version of the XOR space cipher that supports Arabic text by encrypting UTF-8
+  bytes while keeping regular spaces unchanged.
 - **DITTO-style File Dump Utility** — `ditto_file_dump.py`. Dumps any file in
   fixed-length records with CHAR, ZONE, and NUMR lines.
 
@@ -37,6 +40,74 @@ python xor_space_cipher.py decrypt-file encrypted.txt decrypted.txt "key"
 
 Decrypting an encrypted file reproduces the original text exactly, including single,
 multiple, leading, and trailing spaces.
+
+> This XOR cipher is for learning only and is not secure for real sensitive data.
+
+## XOR Unicode/Arabic Space Cipher
+
+`xor_space_cipher_unicode.py` is a Unicode-safe version of the XOR space cipher. It
+supports Arabic text and other Unicode text by converting the text to UTF-8 bytes
+before applying XOR.
+
+This avoids the `0..255` character limit problem that happens when encrypting Arabic
+letters directly as Python characters.
+
+- Regular spaces are preserved exactly.
+- The key advances only for non-space UTF-8 bytes.
+- Every non-space UTF-8 byte is emitted as two uppercase hex digits (`0-9A-F`).
+- Arabic letters usually become multiple hex pairs because UTF-8 stores Arabic
+  characters as multiple bytes.
+- The same file handles encryption and decryption for text and files.
+
+### Usage
+
+Run the interactive menu:
+
+```bash
+python xor_space_cipher_unicode.py
+```
+
+On Windows, you can also run:
+
+```bat
+py xor_space_cipher_unicode.py
+```
+
+Menu options:
+
+```text
+1) Encrypt text
+2) Decrypt text
+3) Encrypt a text file -> text file
+4) Decrypt a text file -> text file
+5) Run self-tests
+6) Quit
+```
+
+Example Arabic encryption:
+
+```text
+Enter text to encrypt: صباح الخير
+Enter key: ZOO
+Encrypted text:
+82FA97F297E882E2 97FD96CB82E196D097FE
+```
+
+Decrypting the encrypted text with the same key returns:
+
+```text
+صباح الخير
+```
+
+Run self-tests from the menu by choosing option `5`.
+
+If Arabic text does not display correctly in Windows Command Prompt, switch the
+console to UTF-8 first:
+
+```bat
+chcp 65001
+py xor_space_cipher_unicode.py
+```
 
 > This XOR cipher is for learning only and is not secure for real sensitive data.
 
