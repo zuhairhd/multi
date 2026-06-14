@@ -19,11 +19,21 @@ encrypted text is always printable and copy-paste safe.
 - Every non-space character is emitted as two lowercase hex digits (`0-9a-f`); raw
   XOR bytes are never printed. The output contains only `0-9a-f` and spaces.
 
+The **same file** `xor_space_cipher.py` handles both encryption and decryption — for
+text and for files. There is no separate decrypt program.
+
 ### Usage
 
 ```bash
-python xor_space_cipher.py        # interactive menu (encrypt/decrypt text or files)
-python xor_space_cipher.py --test # run the built-in self-tests
+python xor_space_cipher.py                                          # interactive menu
+python xor_space_cipher.py --test                                   # run the self-tests
+python xor_space_cipher.py encrypt "hello world" "key"
+python xor_space_cipher.py decrypt "030015070a 0e0417150f" "key"
+python xor_space_cipher.py encrypt-file original.txt encrypted.txt "key"
+python xor_space_cipher.py decrypt-file encrypted.txt decrypted.txt "key"
 ```
+
+Decrypting an encrypted file reproduces the original text exactly, including single,
+multiple, leading, and trailing spaces.
 
 > This XOR cipher is for learning only and is not secure for real sensitive data.
